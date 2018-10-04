@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import getWeb3 from "./utils/getWeb3";
+import { Button } from '@material-ui/core';
 // ***Import the Connext Package here***
 
 import "./App.css";
@@ -32,15 +33,7 @@ class App extends Component {
       <div className="App">
         <h1 className="title">Payment-Starter-Kit</h1>
         <p>A simple way to test your Connext integration!</p>
-        <h2 className="title">Smart Contract Example</h2>
-        <p>
-          If your contracts compiled and migrated successfully, below will show
-          a stored value of 5 (by default).
-        </p>
-        <p>
-          Try changing the value stored on <strong>line 37</strong> of App.js.
-        </p>
-        <div>The stored value is: {this.state.storageValue}</div>
+        <Button variant="contained" color="primary"> Test </Button>
       </div>
     );
   }
