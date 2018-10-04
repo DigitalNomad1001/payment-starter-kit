@@ -12,12 +12,13 @@ class App extends Component {
     contract: null,
     error: null,
     channel: {
-      status: 'JOINED',
+      status: '',
       balance: 0
     },
     deposit: 0,
     targetAccount: '0x0',
-    payment: 0
+    payment: 0,
+    isWaiting: false
   };
 
   componentDidMount = async () => {
@@ -51,6 +52,7 @@ class App extends Component {
   doDeposit = async () => {
     try {
       const { accounts, deposit } = this.state;
+      this.setState({isWaiting: true});
 
       // *** Call openChannel on connext client with deposit ***
 
@@ -68,6 +70,7 @@ class App extends Component {
 
       // *** Call join on client to request that the hub joins with a deposit ***
 
+      this.setState({isWaiting: false});
     } catch (error) {
       alert (
         `Join failed. Check console for details.`
@@ -97,9 +100,11 @@ class App extends Component {
   doWithdraw = async () => {
     try {
       const { accounts } = this.state;
+      this.setState({isWaiting: true})
 
       // *** Call closeChannel on connext client ***
 
+      this.setState({isWaiting: false})
     } catch (error) {
       alert (
         `Withdrawing failed. Check console for details.`
@@ -126,7 +131,8 @@ class App extends Component {
               value={this.state.deposit}
               onChange={(e) => {this.setState({deposit: e.target.value})}}
             />
-            <Button variant="contained" color="primary" style={{marginTop:'5%'}} onClick={this.doDeposit}> Deposit </Button> 
+            <Button variant="contained" color="primary" style={{marginTop:'5%'}} onClick={this.doDeposit} disabled={this.state.isWaiting}> Deposit </Button>
+            {this.state.isWaiting && <CircularProgress style={{marginTop:'5%'}}/>} 
           </FormControl>
         </div>
       );
@@ -153,7 +159,8 @@ class App extends Component {
               onChange={(e) => {this.setState({payment: e.target.value})}}
             />
             <Button variant="contained" color="primary" style={{marginTop:'5%'}} onClick={this.doPayment}> Pay </Button>
-            <Button className="title" variant="contained" color="secondary" style={{margin:'10%', marginTop:'10%'}} onClick={this.doWithdraw}> Withdraw </Button> 
+            <Button className="title" variant="contained" color="secondary" style={{margin:'10%', marginTop:'10%'}} onClick={this.doWithdraw} disabled={this.state.isWaiting}> Withdraw </Button>
+            {this.state.isWaiting && <CircularProgress style={{marginTop:'5%'}}/>}  
           </FormControl>
         </div>
       );

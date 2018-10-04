@@ -5,7 +5,8 @@ Simple starter kit for setting up Connext
 The `master` branch contains a ready-to-go demo of the starter kit:
 1. Kernel deployment script `./kernel/deploy.prod.sh`
 2. Basic UI components for sending and receiving micropayments through your Hub.
-3. A connext-client that is already integrated into the UI
+3. The Connext contracts `./contracts/`
+4. A connext-client that is already integrated into the UI
 
 To fire up this branch, check out *Starting the Demo* below.
 
