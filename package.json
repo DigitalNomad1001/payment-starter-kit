@@ -19,7 +19,11 @@
     "eject": "react-scripts eject",
     "link-contracts": "run-script-os",
     "link-contracts:linux:darwin": "cd src && ln -s ../../build/contracts contracts",
-    "link-contracts:win32": "cd src && mklink \\D contracts ..\\..\\build\\contracts"
+    "link-contracts:win32": "cd src && mklink \\D contracts ..\\..\\build\\contracts",
+    "hub-deploy": "bash kernel/deploy.prod.sh",
+    "hub-stop": "bash kernel/stop.sh",
+    "logs-chainsaw": "docker service logs --tail 100 --follow connext_chainsaw",
+    "logs-hub": "docker service logs --tail 100 --follow connext_hub"
   },
   "devDependencies": {
     "run-script-os": "^1.0.3"
