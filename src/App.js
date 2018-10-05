@@ -59,6 +59,18 @@ class App extends Component {
     const { connext, accounts } = this.state;
     const myChannel = await connext.getChannelByPartyA(accounts[0]);
     if (myChannel) {
+      const threadInitialStates = await connext.getThreadInitialStates(
+        myChannel.channelId
+      );
+      console.log("threadInitialStates: ", threadInitialStates);
+      const aggregateThreadBalance = threadInitialStates.reduce(
+        (balance, thread) => {
+          console.log("thread: ", thread);
+          if (thread.partyA.toLowerCase() === accounts[0].toLowerCase()) {
+          }
+        },
+        0
+      );
       this.setState({
         channel: myChannel,
         channelId: myChannel.channelId
@@ -74,6 +86,9 @@ class App extends Component {
     // *** Poll getChannel on a fixed interval
     await interval(async (iterationNumber, stop) => {
       const myChannel = await this.getMyChannel();
+      if (!myChannel) {
+        return;
+      }
       console.log("myChannel: ", myChannel);
       if (myChannel.status === "OPENED" && !isWaiting) {
         console.log(`Saw open channel, attempting to join...`);
@@ -89,12 +104,15 @@ class App extends Component {
           console.error(`Error joining channel: ${e.toString()}`);
           this.setState({ isWaiting: false });
         }
+        return;
       }
       if (myChannel.status === "JOINED" && isWaiting) {
         this.setState({ isWaiting: false });
+        return;
       }
       if (myChannel.status === "JOINED" && !isWaiting) {
         console.log(`Channel is joined and ready for deposits.`);
+        return;
       }
     }, 1000);
 
@@ -152,7 +170,40 @@ class App extends Component {
 
   doPayment = async () => {
     try {
-      const { accounts, payment } = this.state;
+      const { accounts, payment, connext, targetAccount } = this.state;
+
+      const weiPayment = Web3.utils.toBN(
+        Web3.utils.toWei(payment.toString(), "ether")
+      );
+
+      let ourThread = await connext.getThreadByParties({
+        partyA: accounts[0].toLowerCase(),
+        partyB: targetAccount.toLowerCase()
+      });
+
+      if (!ourThread) {
+        // try creating a thread
+        const threadId = await connext.openThread({
+          to: targetAccount.toLowerCase(),
+          sender: accounts[0].toLowerCase()
+        });
+        ourThread = await connext.getThreadById(threadId);
+      }
+
+      console.log("ourThread: ", ourThread);
+      const updateWeiBalanceA = Web3.utils
+        .toBN(`0x${ourThread.weiBalanceA}`)
+        .sub(weiPayment);
+
+      const updateWeiBalanceB = Web3.utils
+        .toBN(`0x${ourThread.weiBalanceB}`)
+        .add(weiPayment);
+
+      await connext.updateThread({
+        threadId: ourThread.threadId,
+        balanceA: { weiDeposit: updateWeiBalanceA },
+        balanceB: { weiDeposit: updateWeiBalanceB }
+      });
 
       // *** Call openThread on client with account address ***
 
