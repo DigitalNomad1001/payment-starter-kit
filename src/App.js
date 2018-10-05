@@ -132,7 +132,7 @@ class App extends Component {
               onChange={(e) => {this.setState({deposit: e.target.value})}}
             />
             <Button variant="contained" color="primary" style={{marginTop:'5%'}} onClick={this.doDeposit} disabled={this.state.isWaiting}> Deposit </Button>
-            {this.state.isWaiting && <CircularProgress style={{marginTop:'5%'}}/>} 
+            {this.state.isWaiting && <CircularProgress style={{marginTop:'5%', marginLeft: '42%'}}/>} 
           </FormControl>
         </div>
       );
