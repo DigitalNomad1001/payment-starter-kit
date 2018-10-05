@@ -29,7 +29,9 @@
     "hub-start": "bash kernel/deploy.prod.sh",
     "hub-stop": "bash kernel/stop.sh",
     "logs-chainsaw": "docker service logs --tail 100 --follow connext_chainsaw",
-    "logs-hub": "docker service logs --tail 100 --follow connext_hub"
+    "logs-hub": "docker service logs --tail 100 --follow connext_hub",
+    "db": "bash kernel/db.sh",
+    "resetdb": "bash kernel/resetdb.sh"
   },
   "devDependencies": {
     "run-script-os": "^1.0.3"
