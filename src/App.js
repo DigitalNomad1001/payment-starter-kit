@@ -55,25 +55,46 @@ class App extends Component {
     }
   };
 
+  getMyChannel = async () => {
+    const { connext, accounts } = this.state;
+    const myChannel = await connext.getChannelByPartyA(accounts[0]);
+    if (myChannel) {
+      this.setState({
+        channel: myChannel,
+        channelId: myChannel.channelId
+      });
+    }
+    return myChannel;
+  };
+
   poller = async () => {
     let updatedChannel;
-    const { connext, channel, accounts, channelId } = this.state;
+    const { connext, isWaiting } = this.state;
 
     // *** Poll getChannel on a fixed interval
     await interval(async (iterationNumber, stop) => {
-      if (channelId) {
-        console.log(
-          `Searching for channel updates for address ${accounts[0]}..`
-        );
-        updatedChannel = await connext.getChannelByPartyA(accounts[0]);
-        if (
-          channel &&
-          updatedChannel &&
-          JSON.stringify(updatedChannel) !== JSON.stringify(channel)
-        ) {
-          console.log(`Channel updates found.`);
-          stop();
+      const myChannel = await this.getMyChannel();
+      console.log("myChannel: ", myChannel);
+      if (myChannel.status === "OPENED" && !isWaiting) {
+        console.log(`Saw open channel, attempting to join...`);
+        this.setState({ isWaiting: true });
+        try {
+          await connext.requestJoinChannel({
+            hubDeposit: {
+              weiDeposit: Web3.utils.toBN(Web3.utils.toWei("1", "ether"))
+            },
+            channelId: myChannel.channelId
+          });
+        } catch (e) {
+          console.error(`Error joining channel: ${e.toString()}`);
+          this.setState({ isWaiting: false });
         }
+      }
+      if (myChannel.status === "JOINED" && isWaiting) {
+        this.setState({ isWaiting: false });
+      }
+      if (myChannel.status === "JOINED" && !isWaiting) {
+        console.log(`Channel is joined and ready for deposits.`);
       }
     }, 1000);
 
@@ -110,13 +131,6 @@ class App extends Component {
 
       console.log(`Opened channel with hub: ${channelId}`);
       this.setState({ channelId });
-      // let updatedChannel = {
-      //   status: channel.status,
-      //   balance: channel.balance,
-      //   channelId
-      // };
-
-      // this.setState({ channel: updatedChannel });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
@@ -209,7 +223,11 @@ class App extends Component {
           <h1 className="title">Connext Demo Wallet</h1>
           <FormControl>
             <p className="title">
-              Current Balance: {this.state.channel.balance} ETH
+              Current Balance:{" "}
+              {Web3.utils.fromWei(
+                Web3.utils.toBN(`0x${this.state.channel.weiBalanceA}`)
+              )}{" "}
+              ETH
             </p>
             <TextField
               id="address"
