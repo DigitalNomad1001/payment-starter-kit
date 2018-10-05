@@ -11,6 +11,7 @@ const Web3 = require("web3");
 const interval = require("interval-promise");
 // *** Import the Connext Package ***
 const Connext = require("connext");
+const axios = require("axios");
 
 class App extends Component {
   state = {
@@ -33,6 +34,8 @@ class App extends Component {
     try {
       const web3 = await getWeb3();
       const accounts = await web3.eth.getAccounts();
+
+      console.log(`instantiating connext with hub as ${accounts[0]}..`);
 
       // *** Instantiate the connext client ***
       const connext = new Connext({
@@ -73,22 +76,32 @@ class App extends Component {
       };
 
       const challenge = 3600;
-      const subchanAI = await connext.openChannel({
-        initialDeposits,
-        challenge,
-        sender: accounts[1]
+      console.log(`calling openChannel with account`);
+      const i = axios.create({
+        baseUrl: "http://localhost"
       });
+      const response = await connext.getChannelById(
+        "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
+      );
 
-      // ensure channel is in the database
-      await interval(async (iterationNumber, stop) => {
-        console.log(iterationNumber);
-        channel = await connext.getChannelById(subchanAI);
-        if (channel != null) {
-          stop();
-        }
-      }, 2000);
-      console.log("GOT CHANNEL:", channel);
-      this.setState({ channel });
+      console.log(response);
+
+      // const subchanAI = await connext.openChannel({
+      //   initialDeposits,
+      //   challenge,
+      //   sender: accounts[1]
+      // });
+
+      // // ensure channel is in the database
+      // await interval(async (iterationNumber, stop) => {
+      //   console.log(iterationNumber);
+      //   channel = await connext.getChannelById(subchanAI);
+      //   if (channel != null) {
+      //     stop();
+      //   }
+      // }, 2000);
+      console.log("GOT CHANNEL:");
+      // this.setState({ channel });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
