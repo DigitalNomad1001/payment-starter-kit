@@ -30,6 +30,7 @@
     "hub-stop": "bash kernel/stop.sh",
     "logs-chainsaw": "docker service logs --tail 100 --follow connext_chainsaw",
     "logs-hub": "docker service logs --tail 100 --follow connext_hub",
+    "logs-db": "docker service logs --tail 100 --follow connext_postgres",
     "db": "bash kernel/db.sh",
     "resetdb": "bash kernel/resetdb.sh"
   },
