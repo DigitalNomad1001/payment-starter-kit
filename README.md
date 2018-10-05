@@ -27,6 +27,22 @@ The `tutorial` branch contains a stripped down version of the demo so that you c
 
 #### Steps
 
+- For Ganache: Start Ganache on your host machine.
+
+```bash
+ganache-cli -m "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat" -i 4447 -b 3
+```
+
+- Migrate the contracts to your local blockchain.
+
+```bash
+truffle migrate --reset --network development
+```
+
+- Verify `ops/deploy.prod.sh` to make sure the variables CONTRACT_ADDRESS, ETH_NETWORK_ID, and HUB_ACCOUNT match your targeted blockchain. If you are using Ganache with the above command, it will be set up for this by default.
+
+- For Rinkeby/testnet: Start a node on your computer and migrate the contracts. Make sure to change the above mentioned variables to match your targeted blockchain.
+
 - Deploy the Docker stack.
 
 ```bash
