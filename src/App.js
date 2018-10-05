@@ -129,7 +129,7 @@ class App extends Component {
 
   doDeposit = async () => {
     try {
-      const { accounts, deposit, channel, connext } = this.state;
+      const { accounts, deposit, connext } = this.state;
       this.setState({ isWaiting: true });
 
       const weiDeposit = Web3.utils.toBN(
@@ -148,7 +148,7 @@ class App extends Component {
       });
 
       console.log(`Opened channel with hub: ${channelId}`);
-      this.setState({ channelId });
+      this.setState({ channelId, deposit: weiDeposit });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
@@ -170,64 +170,87 @@ class App extends Component {
 
   doPayment = async () => {
     try {
-      const { accounts, payment, connext, targetAccount } = this.state;
+      this.setState({ isWaiting: true });
+      const { accounts, payment, connext, targetAccount, channel } = this.state;
 
       const weiPayment = Web3.utils.toBN(
         Web3.utils.toWei(payment.toString(), "ether")
       );
 
-      let ourThread = await connext.getThreadByParties({
-        partyA: accounts[0].toLowerCase(),
-        partyB: targetAccount.toLowerCase()
-      });
+      if (targetAccount.toLowerCase() === connext.hubAddress.toLowerCase()) {
+        // channel update intended
+        console.log(`Creating channel payment details..`);
+        const updateWeiBalanceA = Web3.utils
+          .toBN(`0x${channel.weiBalanceA}`)
+          .sub(weiPayment);
 
-      if (!ourThread) {
-        // try creating a thread
-        const threadId = await connext.openThread({
-          to: targetAccount.toLowerCase(),
-          sender: accounts[0].toLowerCase()
+        const updateWeiBalanceB = Web3.utils
+          .toBN(`0x${channel.weiBalanceI}`)
+          .add(weiPayment);
+
+        await connext.updateChannel({
+          channelId: channel.channelId,
+          balanceA: { weiDeposit: updateWeiBalanceA },
+          balanceB: { weiDeposit: updateWeiBalanceB }
         });
-        ourThread = await connext.getThreadById(threadId);
+      } else {
+        // thread update intended
+        let ourThread = await connext.getThreadByParties({
+          partyA: accounts[0].toLowerCase(),
+          partyB: targetAccount.toLowerCase()
+        });
+
+        if (!ourThread) {
+          // try creating a thread
+          const threadId = await connext.openThread({
+            to: targetAccount.toLowerCase(),
+            sender: accounts[0].toLowerCase(),
+            deposit: { weiDeposit: weiPayment }
+          });
+          ourThread = await connext.getThreadById(threadId);
+        }
+
+        console.log("ourThread: ", ourThread);
+        const updateWeiBalanceA = Web3.utils
+          .toBN(`0x${ourThread.weiBalanceA}`)
+          .sub(weiPayment);
+
+        const updateWeiBalanceB = Web3.utils
+          .toBN(`0x${ourThread.weiBalanceB}`)
+          .add(weiPayment);
+
+        await connext.updateThread({
+          threadId: ourThread.threadId,
+          balanceA: { weiDeposit: updateWeiBalanceA },
+          balanceB: { weiDeposit: updateWeiBalanceB }
+        });
+
+        await connext.closeThread(ourThread.threadId);
       }
-
-      console.log("ourThread: ", ourThread);
-      const updateWeiBalanceA = Web3.utils
-        .toBN(`0x${ourThread.weiBalanceA}`)
-        .sub(weiPayment);
-
-      const updateWeiBalanceB = Web3.utils
-        .toBN(`0x${ourThread.weiBalanceB}`)
-        .add(weiPayment);
-
-      await connext.updateThread({
-        threadId: ourThread.threadId,
-        balanceA: { weiDeposit: updateWeiBalanceA },
-        balanceB: { weiDeposit: updateWeiBalanceB }
-      });
-
-      // *** Call openThread on client with account address ***
-
-      // *** updateBalance on client with payment amount ***
-
-      // *** closeThread on client
+      this.setState({ isWaiting: false });
     } catch (error) {
       alert(`Payment failed. Check console for details.`);
       console.log(error);
     }
+    this.setState({ isWaiting: false });
   };
 
   doWithdraw = async () => {
     try {
-      const { accounts, channel } = this.state;
       this.setState({ isWaiting: true });
+      const { connext, channelId } = this.state;
 
       // *** Call closeChannel on connext client ***
-
-      this.setState({ isWaiting: false });
+      console.log(`Closing channel with hub..`);
+      const latestState = await connext.getLatestChannelState(channelId);
+      console.log("latestState", latestState);
+      await connext.closeChannel();
+      console.log(`Closed.`);
     } catch (error) {
       alert(`Withdrawing failed. Check console for details.`);
       console.log(error);
     }
+    this.setState({ isWaiting: false });
   };
 
   render() {
