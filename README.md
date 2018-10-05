@@ -16,3 +16,51 @@ To fire up this branch, check out _Starting the Demo_ below.
 The `tutorial` branch contains a stripped down version of the demo so that you can follow along with our [Integrating the Connext Client] tutorial.
 
 ## Starting the demo
+
+### Starting the hub
+
+#### Prerequisites
+
+- [Docker](https://www.docker.com/)
+- [Node.js 8+](https://nodejs.org/en/)
+- [Ganache CLI](https://github.com/trufflesuite/ganache-cli)
+
+#### Steps
+
+- Deploy the Docker stack.
+
+```bash
+npm run hub-start
+```
+
+- Once the wake-up process completes, view the logs.
+
+```bash
+npm run logs-hub
+```
+
+```bash
+npm run logs-chainsaw
+```
+
+- If you can't see logs, try the following to further debug.
+
+```bash
+docker service ps --no-trunc connext_hub
+```
+
+```bash
+docker service ps --no-trunc connext_chainsaw
+```
+
+- Check that the hub is up by polling localhost:3000
+
+```bash
+curl http://localhost:3000
+```
+
+- Connect to the database to execute manual queries
+
+```bash
+npm run db
+```
