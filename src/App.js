@@ -11,7 +11,6 @@ const Web3 = require("web3");
 const interval = require("interval-promise");
 // *** Import the Connext Package ***
 const Connext = require("connext");
-const axios = require("axios");
 
 class App extends Component {
   state = {
@@ -21,7 +20,8 @@ class App extends Component {
     error: null,
     channel: {
       status: "",
-      balance: 0
+      balance: 0,
+      channelId: null
     },
     deposit: 0,
     targetAccount: "0x0",
@@ -35,18 +35,19 @@ class App extends Component {
       const web3 = await getWeb3();
       const accounts = await web3.eth.getAccounts();
 
-      console.log(`instantiating connext with hub as ${accounts[0]}..`);
+      console.log(`instantiating connext with hub as 0x627306090abab3a6e1400e9345bc60c78a8bef57..`);
 
       // *** Instantiate the connext client ***
       const connext = new Connext({
         web3,
-        hubAddress: accounts[0],
+        hubAddress: "0x627306090abab3a6e1400e9345bc60c78a8bef57",
         hubUrl: "http://localhost:3000",
         contractAddress: "0xf25186B5081Ff5cE73482AD761DB0eB0d25abfBF"
       });
 
       // *** Set web3, accounts and connext instance to state ***
       this.setState({ web3, accounts, connext });
+      this.poller();
     } catch (error) {
       alert(
         `Failed to load web3, accounts, or connext. Check console for details.`
@@ -56,9 +57,18 @@ class App extends Component {
   };
 
   poller = async () => {
-    const { accounts } = this.state;
+    let updatedChannel;
 
     // *** Poll getChannel on a fixed interval
+      await interval(async (iterationNumber, stop) => {
+        const { connext, channel } = this.state;
+        if(channel.channelId != null) {
+          updatedChannel = await connext.getChannelById(channel.channelId);
+          if (updatedChannel.status == "Opened") {
+            console.log("FOUND CHANNEL")
+          }
+        } 
+      }, 1000);
 
     // *** Save channel to state
 
@@ -67,41 +77,28 @@ class App extends Component {
 
   doDeposit = async () => {
     try {
-      let { accounts, deposit, channel, connext } = this.state;
+      const { accounts, deposit, channel, connext } = this.state;
       this.setState({ isWaiting: true });
 
       // *** Call openChannel on connext client with deposit ***
       const initialDeposits = {
         weiDeposit: Web3.utils.toBN(deposit.toString())
       };
-
       const challenge = 3600;
-      console.log(`calling openChannel with account`);
-      const i = axios.create({
-        baseUrl: "http://localhost"
+
+      let channelId = await connext.openChannel({
+        initialDeposits,
+        challenge,
+        sender: accounts[0]
       });
-      const response = await connext.getChannelById(
-        "0xf17f52151EbEF6C7334FAD080c5704D77216b732"
-      );
 
-      console.log(response);
+      let updatedChannel = {
+        status: channel.status,
+        balance: channel.balance,
+        channelId
+      }
 
-      // const subchanAI = await connext.openChannel({
-      //   initialDeposits,
-      //   challenge,
-      //   sender: accounts[1]
-      // });
-
-      // // ensure channel is in the database
-      // await interval(async (iterationNumber, stop) => {
-      //   console.log(iterationNumber);
-      //   channel = await connext.getChannelById(subchanAI);
-      //   if (channel != null) {
-      //     stop();
-      //   }
-      // }, 2000);
-      console.log("GOT CHANNEL:");
-      // this.setState({ channel });
+      this.setState({ channel: updatedChannel });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
