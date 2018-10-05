@@ -4,7 +4,7 @@
 CONTRACT_ADDRESS=0xf25186B5081Ff5cE73482AD761DB0eB0d25abfBF
 ETH_NETWORK_ID=4447
 ETH_NODE_PROTOCOL=http://
-ETH_NODE_HOST=host.docker.internal
+ETH_NODE_HOST=localhost
 ETH_NODE_PORT=8545
 ETH_NODE_URL=${ETH_NODE_PROTOCOL}${ETH_NODE_HOST}:${ETH_NODE_PORT}
 HUB_ACCOUNT=0x627306090abab3a6e1400e9345bc60c78a8bef57
@@ -50,7 +50,7 @@ function new_secret {
     fi
 }
 
-new_secret connext_db_prod
+new_secret connext_db_dev
 
 mkdir -p ~/ethereum
 
