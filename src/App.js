@@ -90,8 +90,31 @@ class App extends Component {
     return myChannel;
   };
 
+  closeOpenThreads = async () => {
+    const { channelId, connext } = this.state;
+    if (!channelId) {
+      return;
+    }
+
+    const threads = await connext.getThreadsByChannelId(channelId);
+
+    try {
+      if (threads.length !== 0) {
+        console.log(`Found lingering open thread, closing`);
+        const threads = await connext.getThreadsByChannelId(channelId);
+        const threadIds = threads.map(t => {
+          return t.threadId;
+        });
+        await connext.closeThreads(threadIds);
+      }
+    } catch (e) {
+      alert(`Closing thread failed. Check console for details.`);
+      console.log(e);
+    }
+  };
+
   poller = async () => {
-    let updatedChannel;
+    let updatedChannel = {};
     const { isWaiting } = this.state;
 
     // *** Poll getChannel on a fixed interval
@@ -104,6 +127,7 @@ class App extends Component {
       if (myChannel.status === "OPENED" && !isWaiting) {
         console.log(`Saw open channel, attempting to join...`);
         try {
+          // *** If channel state is opened, doJoin
           await this.doJoin();
         } catch (e) {
           console.error(`Error joining channel: ${e.toString()}`);
@@ -117,7 +141,13 @@ class App extends Component {
       }
       if (myChannel.status === "JOINED" && !isWaiting) {
         console.log(`Channel is joined and ready for deposits.`);
-        return;
+        if (JSON.stringify(myChannel) !== JSON.stringify(updatedChannel)) {
+          console.log(`Channel updates detected, stopping polling.`);
+          updatedChannel = myChannel;
+          // *** If there are threads, close them
+          await this.closeOpenThreads();
+          stop();
+        }
       }
     }, 1000);
 
@@ -128,8 +158,6 @@ class App extends Component {
       channel: updatedChannel,
       channelId: updatedChannel.channelId
     });
-
-    // *** If channel state is opened, doJoin
   };
 
   doDeposit = async () => {
@@ -225,7 +253,6 @@ class App extends Component {
             sender: accounts[0].toLowerCase(),
             deposit: { weiDeposit: weiPayment }
           });
-          this.setState({ threadId });
           ourThread = await connext.getThreadById(threadId);
         }
 
@@ -245,7 +272,6 @@ class App extends Component {
         });
 
         await connext.closeThread(ourThread.threadId);
-        this.setState({ threadId: null });
       }
       this.setState({ isWaiting: false });
     } catch (error) {
