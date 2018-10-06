@@ -59,18 +59,6 @@ class App extends Component {
     const { connext, accounts } = this.state;
     const myChannel = await connext.getChannelByPartyA(accounts[0]);
     if (myChannel) {
-      const threadInitialStates = await connext.getThreadInitialStates(
-        myChannel.channelId
-      );
-      console.log("threadInitialStates: ", threadInitialStates);
-      const aggregateThreadBalance = threadInitialStates.reduce(
-        (balance, thread) => {
-          console.log("thread: ", thread);
-          if (thread.partyA.toLowerCase() === accounts[0].toLowerCase()) {
-          }
-        },
-        0
-      );
       this.setState({
         channel: myChannel,
         channelId: myChannel.channelId
@@ -81,7 +69,7 @@ class App extends Component {
 
   poller = async () => {
     let updatedChannel;
-    const { connext, isWaiting } = this.state;
+    const { isWaiting } = this.state;
 
     // *** Poll getChannel on a fixed interval
     await interval(async (iterationNumber, stop) => {
@@ -93,7 +81,6 @@ class App extends Component {
       if (myChannel.status === "OPENED" && !isWaiting) {
         console.log(`Saw open channel, attempting to join...`);
         try {
-          this.setState({ isWaiting: true });
           await this.doJoin();
         } catch (e) {
           console.error(`Error joining channel: ${e.toString()}`);
@@ -123,6 +110,7 @@ class App extends Component {
   };
 
   doDeposit = async () => {
+    // *** Call openChannel on connext client with deposit ***
     try {
       const { accounts, deposit, connext } = this.state;
       this.setState({ isWaiting: true });
@@ -131,7 +119,6 @@ class App extends Component {
         Web3.utils.toWei(deposit.toString(), "ether")
       );
 
-      // *** Call openChannel on connext client with deposit ***
       const challenge = 3600;
 
       console.log(`Creating channel with weiDeposit: ${weiDeposit.toString()}`);
@@ -150,7 +137,9 @@ class App extends Component {
     }
   };
 
-  doJoin = async () => {
+  doJoin = async channelId => {
+    // *** Call join on client to request that the hub joins with a deposit ***
+    this.setState({ isWaiting: true });
     try {
       const { channelId, deposit, connext } = this.state;
 
@@ -171,6 +160,7 @@ class App extends Component {
       alert(`Join failed. Check console for details.`);
       console.log(error);
     }
+    this.setState({ isWaiting: false });
   };
 
   doPayment = async () => {
@@ -212,6 +202,7 @@ class App extends Component {
             sender: accounts[0].toLowerCase(),
             deposit: { weiDeposit: weiPayment }
           });
+          this.setState({ threadId });
           ourThread = await connext.getThreadById(threadId);
         }
 
@@ -231,6 +222,7 @@ class App extends Component {
         });
 
         await connext.closeThread(ourThread.threadId);
+        this.setState({ threadId: null });
       }
       this.setState({ isWaiting: false });
     } catch (error) {
