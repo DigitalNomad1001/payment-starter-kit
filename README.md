@@ -23,11 +23,28 @@ The `tutorial` branch contains a stripped down version of the demo so that you c
 
 - [Docker](https://www.docker.com/)
 - [Node.js 8+](https://nodejs.org/en/)
-- [Ganache CLI](https://github.com/trufflesuite/ganache-cli)
 
 #### Steps
 
-- For Ganache: Start Ganache on your host machine:
+- Install dependencies:
+
+```bash
+npm i
+```
+
+- Install Truffle globally:
+
+```bash
+npm i -g truffle
+```
+
+- For Ganache: Install Ganache CLI globally:
+
+```bash
+npm i -g ganache-cli
+```
+
+- Start Ganache on your host machine:
 
 ```bash
 ganache-cli -m "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat" -i 4447 -b 3
@@ -59,6 +76,10 @@ npm run logs-hub
 npm run logs-chainsaw
 ```
 
+```bash
+npm run logs-db
+```
+
 - If you can't see logs, try the following to further debug:
 
 ```bash
@@ -79,4 +100,28 @@ curl http://localhost:3000
 
 ```bash
 npm run db
+```
+
+### Starting the UI
+
+- Start the server:
+
+```bash
+npm start
+```
+
+- Browse to http://localhost:3000
+
+- Set up Metamask to talk to your local blockchain by pointing it to http://localhost:8545.
+
+- Import accounts into Metamask from your local blockchain (do not use the accounts[0] which created your hub).
+
+- UI showcases create channel, create thread, update thread, close thread, and close channel functionalities.
+
+### Troubleshooting
+
+- If the logs show database connection issues, restart the containers.
+
+```bash
+docker container restart <CONTAINER_ID>
 ```
