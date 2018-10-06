@@ -27,7 +27,7 @@ The `tutorial` branch contains a stripped down version of the demo so that you c
 
 #### Steps
 
-- For Ganache: Start Ganache on your host machine.
+- For Ganache: Start Ganache on your host machine:
 
 ```bash
 ganache-cli -m "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat" -i 4447 -b 3
@@ -43,13 +43,13 @@ truffle migrate --reset --network development
 
 - For Rinkeby/testnet: Start a node on your computer and migrate the contracts. Make sure to change the above mentioned variables to match your targeted blockchain.
 
-- Deploy the Docker stack.
+- Deploy the Docker stack:
 
 ```bash
 npm run hub-start
 ```
 
-- Once the wake-up process completes, view the logs.
+- Once the wake-up process completes, view the logs:
 
 ```bash
 npm run logs-hub
@@ -59,7 +59,7 @@ npm run logs-hub
 npm run logs-chainsaw
 ```
 
-- If you can't see logs, try the following to further debug.
+- If you can't see logs, try the following to further debug:
 
 ```bash
 docker service ps --no-trunc connext_hub
@@ -69,13 +69,13 @@ docker service ps --no-trunc connext_hub
 docker service ps --no-trunc connext_chainsaw
 ```
 
-- Check that the hub is up by polling localhost:3000
+- Check that the hub is up by polling localhost:3000:
 
 ```bash
 curl http://localhost:3000
 ```
 
-- Connect to the database to execute manual queries
+- Connect to the database to execute manual queries:
 
 ```bash
 npm run db
