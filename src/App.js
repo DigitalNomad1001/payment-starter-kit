@@ -5,7 +5,6 @@ import {
   FormControl,
   TextField,
   CircularProgress,
-  InputLabel,
   Select,
   MenuItem
 } from "@material-ui/core";
@@ -278,7 +277,7 @@ class App extends Component {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
     }
-    if (this.state.channel.status != "JOINED") {
+    if (this.state.channel.status !== "JOINED") {
       return (
         <div className="App">
           <h1 className="title">Connext Demo Wallet</h1>
