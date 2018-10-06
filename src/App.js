@@ -374,7 +374,7 @@ class App extends Component {
               label="Amount in Eth"
               variant="outlined"
               margin="dense"
-              value={this.state.payment | 0}
+              value={this.state.payment}
               onChange={e => {
                 this.setState({ payment: e.target.value });
               }}
