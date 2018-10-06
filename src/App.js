@@ -102,10 +102,11 @@ class App extends Component {
       if (threads.length !== 0) {
         console.log(`Found lingering open thread, closing`);
         const threads = await connext.getThreadsByChannelId(channelId);
-        const threadIds = threads.map(t => {
-          return t.threadId;
-        });
-        await connext.closeThreads(threadIds);
+        await Promise.all(
+          threads.map(t => {
+            return connext.closeThread(t.threadId);
+          })
+        );
       }
     } catch (e) {
       alert(`Closing thread failed. Check console for details.`);
@@ -140,12 +141,12 @@ class App extends Component {
         return;
       }
       if (myChannel.status === "JOINED" && !isWaiting) {
+        await this.closeOpenThreads();
         console.log(`Channel is joined and ready for deposits.`);
         if (JSON.stringify(myChannel) !== JSON.stringify(updatedChannel)) {
           console.log(`Channel updates detected, stopping polling.`);
           updatedChannel = myChannel;
           // *** If there are threads, close them
-          await this.closeOpenThreads();
           stop();
         }
       }
@@ -246,7 +247,13 @@ class App extends Component {
           partyB: targetAccount.toLowerCase()
         });
 
-        if (!ourThread) {
+        console.log("ourThread: ", ourThread);
+
+        if (
+          !ourThread ||
+          ourThread.status === "SETTLED" ||
+          ourThread.length === 0
+        ) {
           // try creating a thread
           const threadId = await connext.openThread({
             to: targetAccount.toLowerCase(),
@@ -265,13 +272,16 @@ class App extends Component {
           .toBN(`0x${ourThread.weiBalanceB}`)
           .add(weiPayment);
 
+        console.log("ourThread.threadId: ", ourThread.threadId);
         await connext.updateThread({
           threadId: ourThread.threadId,
           balanceA: { weiDeposit: updateWeiBalanceA },
           balanceB: { weiDeposit: updateWeiBalanceB }
         });
 
+        console.log("ourThread.threadId: ", ourThread.threadId);
         await connext.closeThread(ourThread.threadId);
+        await this.getMyChannel(channel.channelId);
       }
       this.setState({ isWaiting: false });
     } catch (error) {
