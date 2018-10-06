@@ -92,18 +92,13 @@ class App extends Component {
       console.log("myChannel: ", myChannel);
       if (myChannel.status === "OPENED" && !isWaiting) {
         console.log(`Saw open channel, attempting to join...`);
-        this.setState({ isWaiting: true });
         try {
-          await connext.requestJoinChannel({
-            hubDeposit: {
-              weiDeposit: Web3.utils.toBN(Web3.utils.toWei("1", "ether"))
-            },
-            channelId: myChannel.channelId
-          });
+          this.setState({ isWaiting: true });
+          await this.doJoin();
         } catch (e) {
           console.error(`Error joining channel: ${e.toString()}`);
-          this.setState({ isWaiting: false });
         }
+        this.setState({ isWaiting: false });
         return;
       }
       if (myChannel.status === "JOINED" && isWaiting) {
@@ -148,7 +143,7 @@ class App extends Component {
       });
 
       console.log(`Opened channel with hub: ${channelId}`);
-      this.setState({ channelId, deposit: weiDeposit });
+      this.setState({ channelId, deposit });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
@@ -157,11 +152,21 @@ class App extends Component {
 
   doJoin = async () => {
     try {
-      const { accounts, deposit } = this.state;
+      const { channelId, deposit, connext } = this.state;
 
       // *** Call join on client to request that the hub joins with a deposit ***
-
-      this.setState({ isWaiting: false });
+      const weiDeposit = Web3.utils.toBN(
+        Web3.utils.toWei(deposit.toString(), "ether")
+      );
+      console.log(
+        `Requesting hub join channel ${channelId} with ${weiDeposit.toString()} wei deposit`
+      );
+      await connext.requestJoinChannel({
+        hubDeposit: {
+          weiDeposit
+        },
+        channelId
+      });
     } catch (error) {
       alert(`Join failed. Check console for details.`);
       console.log(error);
