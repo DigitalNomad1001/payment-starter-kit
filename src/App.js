@@ -104,7 +104,12 @@ class App extends Component {
       console.log("myChannel: ", myChannel);
       if (myChannel.status === "OPENED" && !isWaiting) {
         console.log(`Saw open channel, attempting to join...`);
-        this.doJoin(myChannel.channelId);
+        try {
+          await this.doJoin();
+        } catch (e) {
+          console.error(`Error joining channel: ${e.toString()}`);
+        }
+        this.setState({ isWaiting: false });
         return;
       }
       if (myChannel.status === "JOINED" && isWaiting) {
@@ -149,7 +154,7 @@ class App extends Component {
       });
 
       console.log(`Opened channel with hub: ${channelId}`);
-      this.setState({ channelId, deposit: weiDeposit });
+      this.setState({ channelId, deposit });
     } catch (error) {
       alert(`Deposit failed. Check console for details.`);
       console.log(error);
@@ -158,21 +163,28 @@ class App extends Component {
 
   doJoin = async channelId => {
     // *** Call join on client to request that the hub joins with a deposit ***
+    this.setState({ isWaiting: true });
     try {
-      const { connext } = this.state;
+      const { channelId, deposit, connext } = this.state;
 
-      this.setState({ isWaiting: true });
+      // *** Call join on client to request that the hub joins with a deposit ***
+      const weiDeposit = Web3.utils.toBN(
+        Web3.utils.toWei(deposit.toString(), "ether")
+      );
+      console.log(
+        `Requesting hub join channel ${channelId} with ${weiDeposit.toString()} wei deposit`
+      );
       await connext.requestJoinChannel({
         hubDeposit: {
-          weiDeposit: Web3.utils.toBN(Web3.utils.toWei("1", "ether"))
+          weiDeposit
         },
         channelId
       });
     } catch (error) {
       alert(`Join failed. Check console for details.`);
       console.log(error);
-      this.setState({ isWaiting: false });
     }
+    this.setState({ isWaiting: false });
   };
 
   doPayment = async () => {
@@ -214,6 +226,7 @@ class App extends Component {
             sender: accounts[0].toLowerCase(),
             deposit: { weiDeposit: weiPayment }
           });
+          this.setState({ threadId });
           ourThread = await connext.getThreadById(threadId);
         }
 
@@ -233,6 +246,7 @@ class App extends Component {
         });
 
         await connext.closeThread(ourThread.threadId);
+        this.setState({ threadId: null });
       }
       this.setState({ isWaiting: false });
     } catch (error) {
