@@ -4,7 +4,10 @@ import {
   Button,
   FormControl,
   TextField,
-  CircularProgress
+  CircularProgress,
+  InputLabel,
+  Select,
+  MenuItem
 } from "@material-ui/core";
 import "./App.css";
 const Web3 = require("web3");
@@ -24,7 +27,8 @@ class App extends Component {
     targetAccount: "0x0",
     payment: 0,
     isWaiting: false,
-    connext: null
+    connext: null,
+    targetAddresses: []
   };
 
   componentDidMount = async () => {
@@ -46,12 +50,32 @@ class App extends Component {
 
       // *** Set web3, accounts and connext instance to state ***
       this.setState({ web3, accounts, connext });
+      this.populateAddresses();
       this.poller();
     } catch (error) {
       alert(
         `Failed to load web3, accounts, or connext. Check console for details.`
       );
       console.log(error);
+    }
+  };
+
+  populateAddresses = async () => {
+    const { connext, accounts } = this.state;
+    try {
+      const allChannels = await connext.getAllChannels();
+      const targetAddresses = allChannels
+        .filter(channel => {
+          return (
+            channel.partyI.toLowerCase() === connext.hubAddress.toLowerCase() &&
+            channel.partyA.toLowerCase() !== accounts[0].toLowerCase()
+          );
+        })
+        .map(channel => channel.partyA);
+      console.log("targetAddresses: ", targetAddresses);
+      this.setState({ targetAddresses });
+    } catch (e) {
+      console.error(`Problem getting channels: ${e.toString()}`);
     }
   };
 
@@ -265,7 +289,7 @@ class App extends Component {
               label="Amount in Eth"
               variant="outlined"
               margin="dense"
-              value={this.state.deposit}
+              value={this.state.deposit | 0}
               onChange={e => {
                 this.setState({ deposit: e.target.value });
               }}
@@ -300,22 +324,31 @@ class App extends Component {
               )}{" "}
               ETH
             </p>
-            <TextField
-              id="address"
-              label="Address"
-              variant="outlined"
-              margin="dense"
+            <Select
               value={this.state.targetAccount}
-              onChange={e => {
-                this.setState({ targetAccount: e.target.value });
+              onChange={event => {
+                this.setState({ targetAccount: event.target.value });
               }}
-            />
+              inputProps={{
+                name: "target-accounts",
+                id: "target-accounts"
+              }}
+            >
+              <MenuItem value="">
+                <em>Select a Target Address</em>
+              </MenuItem>
+              {this.state.targetAddresses.map((address, index) => (
+                <MenuItem value={address} key={index}>
+                  {address}
+                </MenuItem>
+              ))}
+            </Select>
             <TextField
               id="eth-payment"
               label="Amount in Eth"
               variant="outlined"
               margin="dense"
-              value={this.state.payment}
+              value={this.state.payment | 0}
               onChange={e => {
                 this.setState({ payment: e.target.value });
               }}
